@@ -5,8 +5,12 @@ import { queueRandomNumbers } from '../test-utils/farmhand-debug-hook.js'
 import { loadFixture } from '../test-utils/load-fixture.js'
 import { openPage } from '../test-utils/open-page.js'
 
-test('should load save file', async ({ page }) => {
+test('should load and persist a save file across reload', async ({ page }) => {
   await loadFixture(page, 'crops-mature')
+
+  await expect(page.getByRole('banner')).toContainText('$100,106.30')
+
+  await page.reload()
 
   await expect(page.getByRole('banner')).toContainText('$100,106.30')
 })

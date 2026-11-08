@@ -253,7 +253,7 @@ test('displays tooltips for export and import buttons', async () => {
   ).toBeInTheDocument()
 })
 
-test('passes a selected import file to handleImportDataClick', async () => {
+test('asks for confirmation before importing a selected file', async () => {
   const user = userEvent.setup()
   const handleImportDataClick = vi.fn()
   const { container } = render(
@@ -264,8 +264,43 @@ test('passes a selected import file to handleImportDataClick', async () => {
 
   await user.upload(input, file)
 
-  expect(handleImportDataClick).toHaveBeenCalledWith([[null, file]])
+  expect(handleImportDataClick).not.toHaveBeenCalled()
+  expect(await screen.findByRole('dialog')).toHaveTextContent(
+    'Import game data?'
+  )
   expect(input.value).toBe('')
+})
+
+test('imports the selected file after confirmation', async () => {
+  const user = userEvent.setup()
+  const handleImportDataClick = vi.fn()
+  const { container } = render(
+    <SettingsView {...defaultProps} {...{ handleImportDataClick }} />
+  )
+  const file = new File(['{}'], 'farmhand.json', { type: 'application/json' })
+  const input = container.querySelector('input[type=file]') as HTMLInputElement
+
+  await user.upload(input, file)
+  await user.click(screen.getByRole('button', { name: 'Import', exact: true }))
+
+  expect(handleImportDataClick).toHaveBeenCalledWith([[null, file]])
+  await waitForElementToBeRemoved(() => screen.queryByRole('dialog'))
+})
+
+test('cancels an import without applying the selected file', async () => {
+  const user = userEvent.setup()
+  const handleImportDataClick = vi.fn()
+  const { container } = render(
+    <SettingsView {...defaultProps} {...{ handleImportDataClick }} />
+  )
+  const file = new File(['{}'], 'farmhand.json', { type: 'application/json' })
+  const input = container.querySelector('input[type=file]') as HTMLInputElement
+
+  await user.upload(input, file)
+  await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+  expect(handleImportDataClick).not.toHaveBeenCalled()
+  await waitForElementToBeRemoved(() => screen.queryByRole('dialog'))
 })
 
 test('Import Game Data button opens the file picker', async () => {

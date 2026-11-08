@@ -381,7 +381,7 @@ export default {
     const [, file] = data
     const fileReader = new FileReader()
 
-    fileReader.addEventListener('loadend', eImport => {
+    fileReader.addEventListener('loadend', async eImport => {
       try {
         const target = eImport.target as FileReader
         const json = String(target?.result)
@@ -398,14 +398,16 @@ export default {
           throw new Error(INVALID_DATA_PROVIDED)
         }
 
-        this.setState({
+        const importedState = {
           ...transformStateDataForImport({
             ...(this.createInitialState ? this.createInitialState() : {}),
             ...state,
           }),
           hasBooted: true,
-        })
+        }
 
+        await this.persistState(importedState)
+        this.setState(importedState)
         this.showNotification('Data loaded!', 'success')
       } catch (e) {
         console.error(e)

@@ -65,6 +65,9 @@ const SettingsView = ({
   showHomeScreen: boolean
 }) => {
   const [isClearDataDialogOpen, setIsClearDataDialogOpen] = useState(false)
+  const [isImportConfirmDialogOpen, setIsImportConfirmDialogOpen] =
+    useState(false)
+  const [pendingImportFile, setPendingImportFile] = useState<File | null>(null)
   const importFileInputRef = useRef<HTMLInputElement>(null)
 
   const handleImportFileChange = (
@@ -76,10 +79,25 @@ const SettingsView = ({
     event.target.value = ''
 
     if (file) {
+      setPendingImportFile(file)
+      setIsImportConfirmDialogOpen(true)
+    }
+  }
+
+  const handleImportConfirm = () => {
+    if (pendingImportFile) {
       // handleImportDataClick expects [[readResult, file]] tuples (the shape
       // react-file-reader-input used to provide), but only uses the file.
-      handleImportDataClick([[null, file]])
+      handleImportDataClick([[null, pendingImportFile]])
     }
+
+    setPendingImportFile(null)
+    setIsImportConfirmDialogOpen(false)
+  }
+
+  const handleImportCancel = () => {
+    setPendingImportFile(null)
+    setIsImportConfirmDialogOpen(false)
   }
 
   return (
@@ -262,6 +280,43 @@ const SettingsView = ({
               }}
             >
               Do it
+            </Button>
+          </DialogActions>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        {...{
+          className: 'Farmhand',
+          open: isImportConfirmDialogOpen,
+          onClose: handleImportCancel,
+          maxWidth: 'xs',
+        }}
+      >
+        <DialogTitle>Import game data?</DialogTitle>
+        <DialogContent dividers>
+          <p>
+            Are you sure that you want to replace your current game data with
+            the selected file? This can't be undone. You may want to export
+            your game data first.
+          </p>
+          <DialogActions>
+            <Button
+              autoFocus
+              {...{
+                color: 'primary',
+                onClick: handleImportCancel,
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              {...{
+                color: 'primary',
+                onClick: handleImportConfirm,
+              }}
+            >
+              Import
             </Button>
           </DialogActions>
         </DialogContent>

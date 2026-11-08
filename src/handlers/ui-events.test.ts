@@ -539,6 +539,55 @@ describe('UI Event Handlers', () => {
     })
   })
 
+  describe('handleImportDataClick', () => {
+    test('persists validated imported data before applying it', async () => {
+      const handler = uiEventHandlers.handleImportDataClick.bind(mockContext)
+      const file = new File([JSON.stringify({ money: 1234 })], 'farmhand.json', {
+        type: 'application/json',
+      })
+
+      mockContext.persistState.mockResolvedValue(undefined)
+
+      handler([[null, file]])
+
+      await vi.waitFor(() => {
+        expect(mockContext.persistState).toHaveBeenCalledTimes(1)
+      })
+
+      expect(mockContext.persistState).toHaveBeenCalledWith(
+        expect.objectContaining({ money: 1234, hasBooted: true })
+      )
+      expect(mockContext.setState).toHaveBeenCalledWith(
+        expect.objectContaining({ money: 1234, hasBooted: true })
+      )
+      expect(mockContext.showNotification).toHaveBeenCalledWith(
+        'Data loaded!',
+        'success'
+      )
+    })
+
+    test('rejects invalid imported data without persisting or applying it', async () => {
+      const handler = uiEventHandlers.handleImportDataClick.bind(mockContext)
+      const file = new File(
+        [JSON.stringify({ money: 'not-a-number' })],
+        'farmhand.json',
+        { type: 'application/json' }
+      )
+
+      handler([[null, file]])
+
+      await vi.waitFor(() => {
+        expect(mockContext.showNotification).toHaveBeenCalledWith(
+          expect.any(String),
+          'error'
+        )
+      })
+
+      expect(mockContext.persistState).not.toHaveBeenCalled()
+      expect(mockContext.setState).not.toHaveBeenCalled()
+    })
+  })
+
   describe('utility handlers', () => {
     test('resets all saved game data', () => {
       const handler =

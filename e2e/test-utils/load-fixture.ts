@@ -22,6 +22,7 @@ export async function loadFixture(page, fixtureName) {
     .setInputFiles(
       path.join(__dirname, '..', 'fixtures', `${fixtureName}.json`)
     )
+  await page.getByRole('button', { name: 'Import', exact: true }).click()
 
   await expect(page.getByText('Data loaded!')).toBeVisible()
 }
